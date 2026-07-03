@@ -90,10 +90,10 @@
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-// Eenmalige setup: maak een blob aan op https://jsonblob.com, plak de inhoud
-// {"round": 1, "orders": []} erin, en zet het ID uit de adresbalk hieronder.
-const BLOB_ID = '019f27be-06ff-7e1a-b2b3-2a8f8b58e224';
-const BLOB_URL = 'https://jsonblob.com/api/jsonBlob/' + BLOB_ID;
+// Eenmalige setup: Firebase Realtime Database. Data staat op het pad "scackapp"
+// binnen deze database, bereikbaar via de REST-API (geen login nodig, rules staan open).
+const FIREBASE_URL = 'https://mavisnack-2527a-default-rtdb.europe-west1.firebasedatabase.app';
+const DATA_URL = FIREBASE_URL + '/scackapp.json';
 const POLL_INTERVAL_MS = 8000;
 const EDIT_QUIET_MS = 4000; // pauzeer polling kort na een eigen wijziging
 
@@ -128,22 +128,23 @@ function App() {
   const lastEditRef = useRef(0);
 
   const fetchRemote = async () => {
-    const res = await fetch(BLOB_URL, { headers: { Accept: 'application/json' } });
+    const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error('load failed: ' + res.status);
-    return res.json();
+    const data = await res.json();
+    return data || {};
   };
 
   const pushRemote = async (payload) => {
-    const res = await fetch(BLOB_URL, {
+    const res = await fetch(DATA_URL, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error('save failed: ' + res.status);
   };
 
   useEffect(() => {
-    if (BLOB_ID === 'PLAK-HIER-JE-BLOB-ID') {
+    if (FIREBASE_URL.includes('PLAK-HIER')) {
       setSetupNeeded(true);
       setLoading(false);
       return;
@@ -153,7 +154,7 @@ function App() {
         const data = await fetchRemote();
         setRound(data.round || 1);
         setOrders(data.orders || []);
-      } catch (e) { /* nog geen data, of blob nog niet bereikbaar */ }
+      } catch (e) { /* nog geen data, of database nog niet bereikbaar */ }
       setLoading(false);
     })();
   }, []);
@@ -245,10 +246,10 @@ function App() {
         </div>
         <div className="name-block">
           <p style={{fontSize: '13px', lineHeight: '1.6', margin: 0}}>
-            De gedeelde opslag is nog niet gekoppeld. Maak een blob aan op
-            {' '}<strong>jsonblob.com</strong>, zet de inhoud op{' '}
-            <code>{'{"round": 1, "orders": []}'}</code>, en vul het ID uit de
-            adresbalk in bij <code>BLOB_ID</code> in de code.
+            De gedeelde opslag is nog niet gekoppeld. Maak een gratis
+            {' '}<strong>Firebase Realtime Database</strong> aan via console.firebase.google.com,
+            zet de rules open voor lezen/schrijven, en vul de database-URL in bij{' '}
+            <code>FIREBASE_URL</code> in de code.
           </p>
         </div>
       </div>
