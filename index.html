@@ -1,0 +1,431 @@
+<div id="root"></div>
+<style>
+  :root {
+    --paper: #fdfbf3;
+    --ink: #2b2420;
+    --grease: #e8d9b5;
+    --ketchup: #c1440e;
+    --mayo: #f2e8d5;
+    --line: #d8c9a3;
+    --stamp: #4a5d3a;
+  }
+
+  * { box-sizing: border-box; }
+
+  #root {
+    font-family: 'Courier New', 'Courier', monospace;
+    background: var(--paper);
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(43,36,32,0.035) 28px);
+    min-height: 100vh;
+    color: var(--ink);
+  }
+
+  .receipt { max-width: 480px; margin: 0 auto; padding: 26px 18px 90px; min-height: 100vh; position: relative; }
+
+  .header { text-align: center; border-bottom: 3px dashed var(--ink); padding-bottom: 14px; margin-bottom: 18px; }
+  .header .eyebrow { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--ketchup); margin: 0 0 4px; }
+  .header h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 900; font-size: 28px; margin: 0; letter-spacing: 1px; }
+  .round-badge { display: inline-block; margin-top: 8px; padding: 3px 10px; border: 1px solid var(--stamp); color: var(--stamp); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; transform: rotate(-2deg); border-radius: 2px; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .link-btn { background: none; border: none; color: var(--ketchup); font-family: inherit; font-size: 12px; letter-spacing: 0.5px; cursor: pointer; padding: 4px 0; text-decoration: underline; }
+
+  .name-block { background: var(--mayo); border: 1px solid var(--line); border-radius: 4px; padding: 16px; margin-bottom: 20px; }
+  .name-block label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #6b6055; margin-bottom: 6px; }
+  .name-block input { width: 100%; padding: 12px 10px; font-family: inherit; font-size: 16px; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); color: var(--ink); }
+  .name-block input:focus { outline: none; border-color: var(--ketchup); }
+
+  .go-btn { width: 100%; margin-top: 12px; padding: 13px; font-family: inherit; font-weight: bold; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; background: var(--ketchup); color: var(--paper); border: none; border-radius: 3px; cursor: pointer; }
+  .go-btn:disabled { opacity: 0.4; cursor: default; }
+  .go-btn:active:not(:disabled) { transform: translateY(1px); }
+
+  .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #6b6055; margin: 22px 0 8px; }
+  .menu-cat { font-family: Georgia, serif; font-weight: bold; font-size: 13px; color: var(--ketchup); margin: 16px 0 6px; }
+
+  .menu-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; border-bottom: 1px dashed var(--line); gap: 10px; }
+  .menu-row .item-name { font-size: 14px; }
+  .menu-row .item-qty { font-size: 12px; color: #8a7f6f; margin-left: 6px; }
+
+  .plus-btn { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--ketchup); color: var(--paper); font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .plus-btn:active { transform: scale(0.92); }
+  .plus-btn:disabled { opacity: 0.4; }
+
+  .custom-block { display: flex; gap: 8px; margin-top: 14px; }
+  .custom-block input { flex: 1; padding: 11px 10px; font-family: inherit; font-size: 15px; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); color: var(--ink); }
+  .custom-block input:focus { outline: none; border-color: var(--ketchup); }
+
+  .order-line { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 2px; border-bottom: 1px dashed var(--line); }
+  .order-line .who { font-weight: bold; font-size: 14px; }
+  .order-line .what { font-size: 13px; color: #4a4038; }
+  .order-line .meta { flex: 1; min-width: 0; }
+  .order-line.mine .who { color: var(--ketchup); }
+
+  .stepper { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .step-btn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: 15px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .step-btn:active { background: var(--grease); }
+  .qty-num { font-weight: bold; min-width: 14px; text-align: center; }
+  .qty-static { font-size: 13px; font-weight: bold; color: #6b6055; }
+
+  .empty { text-align: center; padding: 30px 14px; color: #9a8f80; font-size: 13px; font-style: italic; }
+
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 1px; background: var(--line); border-top: 1px solid var(--line); }
+  .bottom-nav button { flex: 1; background: var(--ink); color: var(--paper); border: none; padding: 16px 8px; font-family: inherit; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer; }
+  .bottom-nav button:active { background: #3a322c; }
+
+  .footer-row { margin-top: 26px; padding-top: 16px; border-top: 3px dashed var(--ink); text-align: center; }
+  .reset-btn { background: none; border: 1px solid var(--ketchup); color: var(--ketchup); font-family: inherit; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 8px 14px; border-radius: 3px; cursor: pointer; }
+  .stamp-line { text-align: center; font-size: 10px; color: #b3a892; margin-top: 14px; letter-spacing: 1px; }
+
+  .toast { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 18px; border-radius: 20px; font-size: 12px; letter-spacing: 0.5px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 10; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+</style>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// Eenmalige setup: maak een blob aan op https://jsonblob.com, plak de inhoud
+// {"round": 1, "orders": []} erin, en zet het ID uit de adresbalk hieronder.
+const BLOB_ID = '019f27be-06ff-7e1a-b2b3-2a8f8b58e224';
+const BLOB_URL = 'https://jsonblob.com/api/jsonBlob/' + BLOB_ID;
+const POLL_INTERVAL_MS = 8000;
+const EDIT_QUIET_MS = 4000; // pauzeer polling kort na een eigen wijziging
+
+const MENU = [
+  { cat: 'Snacks', items: ['Frikandel', 'Kroket', 'Kaassouffle', 'Bamischijf', 'Bitterballen (8 st)', 'Kipcorn', 'Loempia'] },
+  { cat: 'Patat', items: ['Patat klein', 'Patat groot', 'Patat met (mayo)', 'Patat oorlog', 'Patat speciaal'] },
+  { cat: 'Broodjes', items: ['Broodje frikandel', 'Broodje kroket', 'Broodje kaas'] },
+  { cat: 'Drinken', items: ['Cola', 'Fanta', 'Water'] },
+];
+
+function App() {
+  const [screen, setScreen] = useState('name'); // 'name' | 'mine' | 'menu' | 'all'
+  const [round, setRound] = useState(1);
+  const [orders, setOrders] = useState([]);
+  const [name, setName] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [customItem, setCustomItem] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState('');
+  const toastTimer = useRef(null);
+  const saveTimer = useRef(null);
+  const skipNextSave = useRef(true);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(''), 1600);
+  };
+
+  const [setupNeeded, setSetupNeeded] = useState(false);
+  const lastEditRef = useRef(0);
+
+  const fetchRemote = async () => {
+    const res = await fetch(BLOB_URL, { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error('load failed: ' + res.status);
+    return res.json();
+  };
+
+  const pushRemote = async (payload) => {
+    const res = await fetch(BLOB_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('save failed: ' + res.status);
+  };
+
+  useEffect(() => {
+    if (BLOB_ID === 'PLAK-HIER-JE-BLOB-ID') {
+      setSetupNeeded(true);
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        const data = await fetchRemote();
+        setRound(data.round || 1);
+        setOrders(data.orders || []);
+      } catch (e) { /* nog geen data, of blob nog niet bereikbaar */ }
+      setLoading(false);
+    })();
+  }, []);
+
+  // Debounced, centralized save: fires once per settled change instead of per click.
+  useEffect(() => {
+    if (loading || setupNeeded) return;
+    if (skipNextSave.current) { skipNextSave.current = false; return; }
+    lastEditRef.current = Date.now();
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      const payload = { round, orders };
+      try {
+        await pushRemote(payload);
+      } catch (e) {
+        try {
+          await pushRemote(payload);
+        } catch (e2) {
+          showToast('Opslaan mislukt, probeer opnieuw');
+        }
+      }
+    }, 300);
+    return () => clearTimeout(saveTimer.current);
+  }, [round, orders, loading, setupNeeded]);
+
+  // Achtergrond-ververs: haalt periodiek de laatste stand op zodat je bestellingen
+  // van collega's ziet zonder te hoeven verversen.
+  useEffect(() => {
+    if (setupNeeded) return;
+    const interval = setInterval(async () => {
+      if (Date.now() - lastEditRef.current < EDIT_QUIET_MS) return;
+      try {
+        const data = await fetchRemote();
+        skipNextSave.current = true;
+        setRound(data.round || 1);
+        setOrders(data.orders || []);
+      } catch (e) { /* volgende poging over POLL_INTERVAL_MS */ }
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [setupNeeded]);
+
+  const confirmName = () => {
+    const clean = nameInput.trim();
+    if (!clean) return;
+    setName(clean);
+    setScreen('mine');
+  };
+
+  const switchName = () => {
+    setNameInput(name);
+    setScreen('name');
+  };
+
+  const addItem = (itemLabel) => {
+    setOrders(prev => {
+      const idx = prev.findIndex(o => o.name === name && o.item === itemLabel);
+      if (idx >= 0) return prev.map((o, i) => i === idx ? { ...o, qty: o.qty + 1 } : o);
+      return [...prev, { id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), name, item: itemLabel, qty: 1 }];
+    });
+    showToast(itemLabel + ' toegevoegd');
+  };
+
+  const addCustom = () => {
+    const clean = customItem.trim();
+    if (!clean) return;
+    addItem(clean);
+    setCustomItem('');
+  };
+
+  const changeQty = (id, delta) => {
+    setOrders(prev => prev
+      .map(o => o.id === id ? { ...o, qty: o.qty + delta } : o)
+      .filter(o => o.qty > 0));
+  };
+
+  const startNewRound = () => {
+    if (orders.length > 0 && !window.confirm('Nieuwe ronde starten? De hele lijst wordt gewist voor iedereen.')) return;
+    setRound(r => (r || 1) + 1);
+    setOrders([]);
+    showToast('Nieuwe ronde gestart');
+  };
+
+  if (setupNeeded) {
+    return (
+      <div className="receipt">
+        <div className="header">
+          <p className="eyebrow">Even iets missen</p>
+          <h1>ScackApp</h1>
+        </div>
+        <div className="name-block">
+          <p style={{fontSize: '13px', lineHeight: '1.6', margin: 0}}>
+            De gedeelde opslag is nog niet gekoppeld. Maak een blob aan op
+            {' '}<strong>jsonblob.com</strong>, zet de inhoud op{' '}
+            <code>{'{"round": 1, "orders": []}'}</code>, en vul het ID uit de
+            adresbalk in bij <code>BLOB_ID</code> in de code.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div className="receipt"><p style={{textAlign:'center', color:'#9a8f80'}}>ScackApp laden…</p></div>;
+  }
+
+  const myOrders = orders.filter(o => o.name === name);
+  const myTotal = myOrders.reduce((s, o) => s + o.qty, 0);
+  const allTotal = orders.reduce((s, o) => s + o.qty, 0);
+
+  // ---- SCREEN: name ----
+  if (screen === 'name') {
+    return (
+      <div className="receipt">
+        <div className="header">
+          <p className="eyebrow">Vrijdagmiddag traditie</p>
+          <h1>ScackApp</h1>
+          <div className="round-badge">Ronde #{round}</div>
+        </div>
+        <div className="name-block">
+          <label htmlFor="naam">Wie ben jij?</label>
+          <input
+            id="naam"
+            type="text"
+            placeholder="Typ je naam"
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') confirmName(); }}
+            maxLength={40}
+            autoFocus
+          />
+          <button className="go-btn" onClick={confirmName} disabled={!nameInput.trim()}>Doorgaan</button>
+        </div>
+        <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
+      </div>
+    );
+  }
+
+  // ---- SCREEN: mine (home) ----
+  if (screen === 'mine') {
+    return (
+      <div className="receipt">
+        <div className="topbar">
+          <span style={{fontSize: '12px', color: '#6b6055'}}>Ronde #{round}</span>
+          <button className="link-btn" onClick={switchName}>Wissel van naam</button>
+        </div>
+        <div className="header">
+          <p className="eyebrow">Jouw bestelling</p>
+          <h1>{name}</h1>
+        </div>
+
+        {myOrders.length === 0 ? (
+          <div className="empty">Je hebt nog niks besteld.<br />Tik hieronder op Menu om te beginnen.</div>
+        ) : (
+          myOrders.map(o => (
+            <div className="order-line" key={o.id}>
+              <div className="meta">
+                <div className="what">{o.item}</div>
+              </div>
+              <div className="stepper">
+                <button className="step-btn" onClick={() => changeQty(o.id, -1)} aria-label="Een minder">−</button>
+                <span className="qty-num">{o.qty}</span>
+                <button className="step-btn" onClick={() => changeQty(o.id, 1)} aria-label="Een meer">+</button>
+              </div>
+            </div>
+          ))
+        )}
+
+        <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
+        <div className="bottom-nav">
+          <button onClick={() => setScreen('menu')}>Menu</button>
+          <button onClick={() => setScreen('all')}>Alle bestellingen ({allTotal})</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- SCREEN: menu ----
+  if (screen === 'menu') {
+    return (
+      <div className="receipt">
+        <div className="topbar">
+          <button className="link-btn" onClick={() => setScreen('mine')}>← Terug naar mijn bestelling</button>
+        </div>
+        <div className="header">
+          <p className="eyebrow">{name}</p>
+          <h1>Menu</h1>
+        </div>
+
+        {MENU.map(group => (
+          <div key={group.cat}>
+            <p className="menu-cat">{group.cat}</p>
+            {group.items.map(itemLabel => {
+              const mine = orders.find(o => o.name === name && o.item === itemLabel);
+              return (
+                <div className="menu-row" key={itemLabel}>
+                  <span className="item-name">
+                    {itemLabel}
+                    {mine && <span className="item-qty">jij: {mine.qty}x</span>}
+                  </span>
+                  <button className="plus-btn" onClick={() => addItem(itemLabel)} aria-label={'Voeg ' + itemLabel + ' toe'}>+</button>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+
+        <p className="menu-cat">Iets anders</p>
+        <div className="custom-block">
+          <input
+            type="text"
+            placeholder="Bijv. Mexicano zonder ui"
+            value={customItem}
+            onChange={e => setCustomItem(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') addCustom(); }}
+            maxLength={80}
+          />
+          <button className="plus-btn" onClick={addCustom} disabled={!customItem.trim()}>+</button>
+        </div>
+
+        <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
+        <div className="bottom-nav">
+          <button onClick={() => setScreen('mine')}>Mijn bestelling ({myTotal})</button>
+          <button onClick={() => setScreen('all')}>Alle bestellingen ({allTotal})</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- SCREEN: all ----
+  return (
+    <div className="receipt">
+      <div className="topbar">
+        <button className="link-btn" onClick={() => setScreen('mine')}>← Terug naar mijn bestelling</button>
+      </div>
+      <div className="header">
+        <p className="eyebrow">Iedereen</p>
+        <h1>Alle bestellingen</h1>
+        <div className="round-badge">Ronde #{round}</div>
+      </div>
+
+      <p className="section-title">Totaal ({allTotal})</p>
+
+      {orders.length === 0 ? (
+        <div className="empty">Nog niemand heeft besteld.</div>
+      ) : (
+        orders.map(o => (
+          <div className={"order-line" + (o.name === name ? " mine" : "")} key={o.id}>
+            <div className="meta">
+              <div className="who">{o.name}</div>
+              <div className="what">{o.item}</div>
+            </div>
+            {o.name === name ? (
+              <div className="stepper">
+                <button className="step-btn" onClick={() => changeQty(o.id, -1)} aria-label="Een minder">−</button>
+                <span className="qty-num">{o.qty}</span>
+                <button className="step-btn" onClick={() => changeQty(o.id, 1)} aria-label="Een meer">+</button>
+              </div>
+            ) : (
+              <span className="qty-static">{o.qty}x</span>
+            )}
+          </div>
+        ))
+      )}
+
+      <div className="footer-row">
+        <button className="reset-btn" onClick={startNewRound}>Nieuwe ronde starten</button>
+        <p className="stamp-line">— gedeeld voor iedereen, geen account nodig —</p>
+      </div>
+
+      <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
+      <div className="bottom-nav">
+        <button onClick={() => setScreen('mine')}>Mijn bestelling ({myTotal})</button>
+        <button onClick={() => setScreen('menu')}>Menu</button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
