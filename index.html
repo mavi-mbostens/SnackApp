@@ -68,6 +68,10 @@
 
   .empty { text-align: center; padding: 30px 14px; color: #9a8f80; font-size: 13px; font-style: italic; }
 
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .toggle-btn { flex: 1; padding: 10px; font-family: inherit; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 3px; cursor: pointer; }
+  .toggle-btn.active { background: var(--ketchup); color: var(--paper); border-color: var(--ketchup); }
+
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 1px; background: var(--line); border-top: 1px solid var(--line); }
   .bottom-nav button { flex: 1; background: var(--ink); color: var(--paper); border: none; padding: 16px 8px; font-family: inherit; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer; }
   .bottom-nav button:active { background: #3a322c; }
@@ -101,7 +105,7 @@ const MENU = [
 ];
 
 function App() {
-  const [screen, setScreen] = useState('name'); // 'name' | 'mine' | 'menu' | 'all'
+  const [screen, setScreen] = useState('name'); // 'name' | 'menu' | 'all'
   const [round, setRound] = useState(1);
   const [orders, setOrders] = useState([]);
   const [name, setName] = useState('');
@@ -120,6 +124,7 @@ function App() {
   };
 
   const [setupNeeded, setSetupNeeded] = useState(false);
+  const [groupBy, setGroupBy] = useState('persoon'); // 'persoon' | 'artikel'
   const lastEditRef = useRef(0);
 
   const fetchRemote = async () => {
@@ -194,7 +199,7 @@ function App() {
     const clean = nameInput.trim();
     if (!clean) return;
     setName(clean);
-    setScreen('mine');
+    setScreen('menu');
   };
 
   const switchName = () => {
@@ -286,55 +291,17 @@ function App() {
     );
   }
 
-  // ---- SCREEN: mine (home) ----
-  if (screen === 'mine') {
-    return (
-      <div className="receipt">
-        <div className="topbar">
-          <span style={{fontSize: '12px', color: '#6b6055'}}>Ronde #{round}</span>
-          <button className="link-btn" onClick={switchName}>Wissel van naam</button>
-        </div>
-        <div className="header">
-          <p className="eyebrow">Jouw bestelling</p>
-          <h1>{name}</h1>
-        </div>
-
-        {myOrders.length === 0 ? (
-          <div className="empty">Je hebt nog niks besteld.<br />Tik hieronder op Menu om te beginnen.</div>
-        ) : (
-          myOrders.map(o => (
-            <div className="order-line" key={o.id}>
-              <div className="meta">
-                <div className="what">{o.item}</div>
-              </div>
-              <div className="stepper">
-                <button className="step-btn" onClick={() => changeQty(o.id, -1)} aria-label="Een minder">−</button>
-                <span className="qty-num">{o.qty}</span>
-                <button className="step-btn" onClick={() => changeQty(o.id, 1)} aria-label="Een meer">+</button>
-              </div>
-            </div>
-          ))
-        )}
-
-        <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
-        <div className="bottom-nav">
-          <button onClick={() => setScreen('menu')}>Menu</button>
-          <button onClick={() => setScreen('all')}>Alle bestellingen ({allTotal})</button>
-        </div>
-      </div>
-    );
-  }
-
-  // ---- SCREEN: menu ----
+  // ---- SCREEN: menu (home) ----
   if (screen === 'menu') {
     return (
       <div className="receipt">
         <div className="topbar">
-          <button className="link-btn" onClick={() => setScreen('mine')}>← Terug naar mijn bestelling</button>
+          <span style={{fontSize: '12px', color: '#6b6055'}}>{name} · Ronde #{round}</span>
+          <button className="link-btn" onClick={switchName}>Wissel van naam</button>
         </div>
         <div className="header">
-          <p className="eyebrow">{name}</p>
-          <h1>Menu</h1>
+          <p className="eyebrow">Vrijdagmiddag traditie</p>
+          <h1>ScackApp</h1>
         </div>
 
         {MENU.map(group => (
@@ -342,13 +309,19 @@ function App() {
             <p className="menu-cat">{group.cat}</p>
             {group.items.map(itemLabel => {
               const mine = orders.find(o => o.name === name && o.item === itemLabel);
+              const qty = mine ? mine.qty : 0;
               return (
                 <div className="menu-row" key={itemLabel}>
-                  <span className="item-name">
-                    {itemLabel}
-                    {mine && <span className="item-qty">jij: {mine.qty}x</span>}
-                  </span>
-                  <button className="plus-btn" onClick={() => addItem(itemLabel)} aria-label={'Voeg ' + itemLabel + ' toe'}>+</button>
+                  <span className="item-name">{itemLabel}</span>
+                  {qty > 0 ? (
+                    <div className="stepper">
+                      <button className="step-btn" onClick={() => changeQty(mine.id, -1)} aria-label={'Een ' + itemLabel + ' minder'}>−</button>
+                      <span className="qty-num">{qty}</span>
+                      <button className="step-btn" onClick={() => addItem(itemLabel)} aria-label={'Nog een ' + itemLabel}>+</button>
+                    </div>
+                  ) : (
+                    <button className="plus-btn" onClick={() => addItem(itemLabel)} aria-label={'Voeg ' + itemLabel + ' toe'}>+</button>
+                  )}
                 </div>
               );
             })}
@@ -370,7 +343,7 @@ function App() {
 
         <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
         <div className="bottom-nav">
-          <button onClick={() => setScreen('mine')}>Mijn bestelling ({myTotal})</button>
+          <button disabled style={{opacity: 0.5}}>Menu</button>
           <button onClick={() => setScreen('all')}>Alle bestellingen ({allTotal})</button>
         </div>
       </div>
@@ -378,40 +351,68 @@ function App() {
   }
 
   // ---- SCREEN: all ----
+  const byPerson = orders.reduce((acc, o) => {
+    (acc[o.name] = acc[o.name] || []).push(o);
+    return acc;
+  }, {});
+
+  const byItem = orders.reduce((acc, o) => {
+    if (!acc[o.item]) acc[o.item] = { qty: 0, people: [] };
+    acc[o.item].qty += o.qty;
+    acc[o.item].people.push(o.name + (o.qty > 1 ? ' (' + o.qty + 'x)' : ''));
+    return acc;
+  }, {});
+  const byItemSorted = Object.entries(byItem).sort((a, b) => b[1].qty - a[1].qty);
+
   return (
     <div className="receipt">
       <div className="topbar">
-        <button className="link-btn" onClick={() => setScreen('mine')}>← Terug naar mijn bestelling</button>
+        <span style={{fontSize: '12px', color: '#6b6055'}}>{name} · Ronde #{round}</span>
+        <button className="link-btn" onClick={switchName}>Wissel van naam</button>
       </div>
       <div className="header">
         <p className="eyebrow">Iedereen</p>
         <h1>Alle bestellingen</h1>
-        <div className="round-badge">Ronde #{round}</div>
+      </div>
+
+      <div className="toggle-row">
+        <button className={groupBy === 'persoon' ? 'toggle-btn active' : 'toggle-btn'} onClick={() => setGroupBy('persoon')}>Per persoon</button>
+        <button className={groupBy === 'artikel' ? 'toggle-btn active' : 'toggle-btn'} onClick={() => setGroupBy('artikel')}>Per artikel</button>
       </div>
 
       <p className="section-title">Totaal ({allTotal})</p>
 
-      {orders.length === 0 ? (
-        <div className="empty">Nog niemand heeft besteld.</div>
-      ) : (
-        orders.map(o => (
-          <div className={"order-line" + (o.name === name ? " mine" : "")} key={o.id}>
-            <div className="meta">
-              <div className="who">{o.name}</div>
-              <div className="what">{o.item}</div>
+      {orders.length === 0 && <div className="empty">Nog niemand heeft besteld.</div>}
+
+      {orders.length > 0 && groupBy === 'persoon' && Object.entries(byPerson).map(([personName, items]) => (
+        <div key={personName} style={{marginBottom: '14px'}}>
+          <p className="menu-cat" style={{color: personName === name ? 'var(--ketchup)' : 'var(--ink)'}}>{personName}</p>
+          {items.map(o => (
+            <div className="order-line" key={o.id}>
+              <div className="meta"><div className="what">{o.item}</div></div>
+              {o.name === name ? (
+                <div className="stepper">
+                  <button className="step-btn" onClick={() => changeQty(o.id, -1)} aria-label="Een minder">−</button>
+                  <span className="qty-num">{o.qty}</span>
+                  <button className="step-btn" onClick={() => changeQty(o.id, 1)} aria-label="Een meer">+</button>
+                </div>
+              ) : (
+                <span className="qty-static">{o.qty}x</span>
+              )}
             </div>
-            {o.name === name ? (
-              <div className="stepper">
-                <button className="step-btn" onClick={() => changeQty(o.id, -1)} aria-label="Een minder">−</button>
-                <span className="qty-num">{o.qty}</span>
-                <button className="step-btn" onClick={() => changeQty(o.id, 1)} aria-label="Een meer">+</button>
-              </div>
-            ) : (
-              <span className="qty-static">{o.qty}x</span>
-            )}
+          ))}
+        </div>
+      ))}
+
+      {orders.length > 0 && groupBy === 'artikel' && byItemSorted.map(([itemName, info]) => (
+        <div className="order-line" key={itemName} style={{alignItems: 'flex-start'}}>
+          <div className="meta">
+            <div className="who">{itemName}</div>
+            <div className="what">{info.people.join(', ')}</div>
           </div>
-        ))
-      )}
+          <span className="qty-static" style={{fontSize: '16px'}}>{info.qty}x</span>
+        </div>
+      ))}
 
       <div className="footer-row">
         <button className="reset-btn" onClick={startNewRound}>Nieuwe ronde starten</button>
@@ -420,8 +421,8 @@ function App() {
 
       <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
       <div className="bottom-nav">
-        <button onClick={() => setScreen('mine')}>Mijn bestelling ({myTotal})</button>
         <button onClick={() => setScreen('menu')}>Menu</button>
+        <button disabled style={{opacity: 0.5}}>Alle bestellingen</button>
       </div>
     </div>
   );
