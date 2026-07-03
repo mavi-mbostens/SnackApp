@@ -57,8 +57,9 @@
   .menu-cat { font-family: Georgia, serif; font-weight: bold; font-size: 13px; color: var(--ketchup); margin: 16px 0 6px; }
 
   .menu-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; border-bottom: 1px dashed var(--line); gap: 10px; }
-  .menu-row .item-name { font-size: 14px; }
+  .menu-row .item-name { font-size: 14px; display: block; }
   .menu-row .item-qty { font-size: 12px; color: #8a7f6f; margin-left: 6px; }
+  .menu-row .item-price { display: block; font-size: 12px; color: var(--ketchup); font-weight: bold; margin-top: 2px; }
 
   .plus-btn { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--ketchup); color: var(--paper); font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .plus-btn:active { transform: scale(0.92); }
@@ -71,6 +72,7 @@
   .order-line { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 2px; border-bottom: 1px dashed var(--line); }
   .order-line .who { font-weight: bold; font-size: 14px; }
   .order-line .what { font-size: 13px; color: #4a4038; }
+  .line-price { font-size: 11px; color: #9a8f80; margin-top: 2px; }
   .order-line .meta { flex: 1; min-width: 0; }
   .order-line.mine .who { color: var(--ketchup); }
 
@@ -122,11 +124,68 @@ const POLL_INTERVAL_MS = 8000;
 const EDIT_QUIET_MS = 4000; // pauzeer polling kort na een eigen wijziging
 
 const MENU = [
-  { cat: 'Snacks', items: ['Frikandel', 'Kroket', 'Kaassouffle', 'Bamischijf', 'Bitterballen (8 st)', 'Kipcorn', 'Loempia'] },
-  { cat: 'Patat', items: ['Patat klein', 'Patat groot', 'Patat met (mayo)', 'Patat oorlog', 'Patat speciaal'] },
-  { cat: 'Broodjes', items: ['Broodje frikandel', 'Broodje kroket', 'Broodje kaas'] },
-  { cat: 'Drinken', items: ['Cola', 'Fanta', 'Water'] },
+  { cat: 'Patat / Raspatat', items: [
+    { name: 'Patat zonder', price: 2.70 },
+  ]},
+  { cat: 'Sauzen', items: [
+    { name: 'Mayo', price: 0.70 },
+    { name: 'Curry', price: 0.70 },
+    { name: 'Ketchup', price: 0.70 },
+    { name: 'Satésaus', price: 0.90 },
+    { name: 'Zigeunersaus', price: 0.90 },
+    { name: 'Joppiesaus', price: 0.90 },
+    { name: 'Knoflooksaus', price: 0.90 },
+    { name: 'Speciaal', price: 0.80 },
+    { name: 'Oorlog', price: 0.90 },
+  ]},
+  { cat: 'Snacks', items: [
+    { name: 'Draadjesvleeskroket', price: 2.60 },
+    { name: 'Kwekkeboomkroket', price: 2.80 },
+    { name: 'Kalfskroket', price: 2.80 },
+    { name: 'Goulashkroket', price: 2.80 },
+    { name: 'Satékroket', price: 2.80 },
+    { name: 'Van Dobben kaaskroket', price: 2.80 },
+    { name: 'Cheesecrack', price: 2.90 },
+    { name: 'Frikandel', price: 2.60 },
+    { name: 'XXL Frikandel (250gr)', price: 4.50 },
+    { name: 'XXL Frikandel speciaal', price: 5.80 },
+    { name: 'Frikandel speciaal', price: 3.40 },
+    { name: 'Loempidel', price: 3.30 },
+    { name: 'Kaassoufflé', price: 2.80 },
+    { name: 'Ham kaassoufflé', price: 2.80 },
+    { name: 'Luxe kaassoufflé (met Goudse kaas)', price: 3.10 },
+    { name: 'Kipcorn', price: 2.90 },
+    { name: 'Pikanto', price: 3.00 },
+    { name: 'Mexicano', price: 3.00 },
+    { name: 'Bamischijf', price: 2.80 },
+    { name: 'Nasischijf', price: 2.80 },
+    { name: 'Lihanboutje', price: 2.80 },
+    { name: 'Viandel', price: 2.90 },
+    { name: 'Turkeystick', price: 3.30 },
+    { name: 'Smulrol', price: 3.30 },
+    { name: 'Shoarmarol', price: 3.30 },
+    { name: 'Loempia (met saus)', price: 4.90 },
+    { name: 'Halve kip', price: 7.95 },
+    { name: 'Berehap met saus', price: 4.90 },
+    { name: 'Knakworst', price: 1.00 },
+    { name: 'Bal gehakt (uit de jus)', price: 3.50 },
+  ]},
+  { cat: 'Mini snacks', items: [
+    { name: 'Kipvingers (6 stuks)', price: 3.70 },
+    { name: 'Spicy chickenwings (5 stuks)', price: 4.50 },
+    { name: 'Kipnuggets (6 stuks)', price: 3.70 },
+    { name: 'Bitterballen (6 stuks)', price: 5.30 },
+    { name: 'Vlammetjes (6 stuks)', price: 4.50 },
+    { name: 'Kaasstengels (6 stuks)', price: 4.80 },
+  ]},
+  { cat: 'Milkshakes', items: [
+    { name: 'Milkshake klein', price: 3.10 },
+    { name: 'Milkshake middel', price: 3.60 },
+    { name: 'Milkshake groot', price: 4.10 },
+  ]},
 ];
+
+const formatEUR = (amount) => '€' + amount.toFixed(2).replace('.', ',');
 
 function App() {
   const [screen, setScreen] = useState('name'); // 'name' | 'menu' | 'all'
@@ -232,11 +291,11 @@ function App() {
     setScreen('name');
   };
 
-  const addItem = (itemLabel) => {
+  const addItem = (itemLabel, price) => {
     setOrders(prev => {
       const idx = prev.findIndex(o => o.name === name && o.item === itemLabel);
       if (idx >= 0) return prev.map((o, i) => i === idx ? { ...o, qty: o.qty + 1 } : o);
-      return [...prev, { id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), name, item: itemLabel, qty: 1 }];
+      return [...prev, { id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), name, item: itemLabel, price: price ?? null, qty: 1 }];
     });
     showToast(itemLabel + ' toegevoegd');
   };
@@ -244,7 +303,7 @@ function App() {
   const addCustom = () => {
     const clean = customItem.trim();
     if (!clean) return;
-    addItem(clean);
+    addItem(clean, null);
     setCustomItem('');
   };
 
@@ -286,7 +345,9 @@ function App() {
 
   const myOrders = orders.filter(o => o.name === name);
   const myTotal = myOrders.reduce((s, o) => s + o.qty, 0);
+  const myPrice = myOrders.reduce((s, o) => s + (o.price || 0) * o.qty, 0);
   const allTotal = orders.reduce((s, o) => s + o.qty, 0);
+  const allPrice = orders.reduce((s, o) => s + (o.price || 0) * o.qty, 0);
 
   // ---- SCREEN: name ----
   if (screen === 'name') {
@@ -327,25 +388,29 @@ function App() {
         <div className="header">
           <p className="eyebrow">Vrijdagmiddag traditie</p>
           <h1>SnackApp</h1>
+          {myTotal > 0 && <div className="round-badge">Jouw totaal: {formatEUR(myPrice)}</div>}
         </div>
 
         {MENU.map(group => (
           <div key={group.cat}>
             <p className="menu-cat">{group.cat}</p>
-            {group.items.map(itemLabel => {
-              const mine = orders.find(o => o.name === name && o.item === itemLabel);
+            {group.items.map(menuItem => {
+              const mine = orders.find(o => o.name === name && o.item === menuItem.name);
               const qty = mine ? mine.qty : 0;
               return (
-                <div className="menu-row" key={itemLabel}>
-                  <span className="item-name">{itemLabel}</span>
+                <div className="menu-row" key={menuItem.name}>
+                  <span className="item-name">
+                    {menuItem.name}
+                    <span className="item-price">{formatEUR(menuItem.price)}</span>
+                  </span>
                   {qty > 0 ? (
                     <div className="stepper">
-                      <button className="step-btn" onClick={() => changeQty(mine.id, -1)} aria-label={'Een ' + itemLabel + ' minder'}>−</button>
+                      <button className="step-btn" onClick={() => changeQty(mine.id, -1)} aria-label={'Een ' + menuItem.name + ' minder'}>−</button>
                       <span className="qty-num">{qty}</span>
-                      <button className="step-btn" onClick={() => addItem(itemLabel)} aria-label={'Nog een ' + itemLabel}>+</button>
+                      <button className="step-btn" onClick={() => addItem(menuItem.name, menuItem.price)} aria-label={'Nog een ' + menuItem.name}>+</button>
                     </div>
                   ) : (
-                    <button className="plus-btn" onClick={() => addItem(itemLabel)} aria-label={'Voeg ' + itemLabel + ' toe'}>+</button>
+                    <button className="plus-btn" onClick={() => addItem(menuItem.name, menuItem.price)} aria-label={'Voeg ' + menuItem.name + ' toe'}>+</button>
                   )}
                 </div>
               );
@@ -365,6 +430,7 @@ function App() {
           />
           <button className="plus-btn" onClick={addCustom} disabled={!customItem.trim()}>+</button>
         </div>
+        <p style={{fontSize: '11px', color: '#9a8f80', marginTop: '6px'}}>Eigen toevoegingen hebben geen vaste prijs en tellen niet mee in het totaal.</p>
 
         <div className={"toast" + (toast ? " show" : "")}>{toast}</div>
         <div className="bottom-nav">
@@ -382,7 +448,7 @@ function App() {
   }, {});
 
   const byItem = orders.reduce((acc, o) => {
-    if (!acc[o.item]) acc[o.item] = { qty: 0, people: [] };
+    if (!acc[o.item]) acc[o.item] = { qty: 0, price: o.price, people: [] };
     acc[o.item].qty += o.qty;
     acc[o.item].people.push(o.name + (o.qty > 1 ? ' (' + o.qty + 'x)' : ''));
     return acc;
@@ -405,29 +471,38 @@ function App() {
         <button className={groupBy === 'artikel' ? 'toggle-btn active' : 'toggle-btn'} onClick={() => setGroupBy('artikel')}>Per artikel</button>
       </div>
 
-      <p className="section-title">Totaal ({allTotal})</p>
+      <p className="section-title">Totaal ({allTotal}) — <span style={{color: 'var(--ink)'}}>{formatEUR(allPrice)}</span></p>
 
       {orders.length === 0 && <div className="empty">Nog niemand heeft besteld.</div>}
 
-      {orders.length > 0 && groupBy === 'persoon' && Object.entries(byPerson).map(([personName, items]) => (
-        <div key={personName} style={{marginBottom: '14px'}}>
-          <p className="menu-cat" style={{color: personName === name ? 'var(--ketchup)' : 'var(--ink)'}}>{personName}</p>
-          {items.map(o => (
-            <div className="order-line" key={o.id}>
-              <div className="meta"><div className="what">{o.item}</div></div>
-              {o.name === name ? (
-                <div className="stepper">
-                  <button className="step-btn" onClick={() => changeQty(o.id, -1)} aria-label="Een minder">−</button>
-                  <span className="qty-num">{o.qty}</span>
-                  <button className="step-btn" onClick={() => changeQty(o.id, 1)} aria-label="Een meer">+</button>
+      {orders.length > 0 && groupBy === 'persoon' && Object.entries(byPerson).map(([personName, items]) => {
+        const subtotal = items.reduce((s, o) => s + (o.price || 0) * o.qty, 0);
+        return (
+          <div key={personName} style={{marginBottom: '14px'}}>
+            <p className="menu-cat" style={{color: personName === name ? 'var(--ketchup)' : 'var(--ink)', display: 'flex', justifyContent: 'space-between'}}>
+              <span>{personName}</span>
+              <span>{formatEUR(subtotal)}</span>
+            </p>
+            {items.map(o => (
+              <div className="order-line" key={o.id}>
+                <div className="meta">
+                  <div className="what">{o.item}</div>
+                  {o.price != null && <div className="line-price">{formatEUR(o.price)} per stuk</div>}
                 </div>
-              ) : (
-                <span className="qty-static">{o.qty}x</span>
-              )}
-            </div>
-          ))}
-        </div>
-      ))}
+                {o.name === name ? (
+                  <div className="stepper">
+                    <button className="step-btn" onClick={() => changeQty(o.id, -1)} aria-label="Een minder">−</button>
+                    <span className="qty-num">{o.qty}</span>
+                    <button className="step-btn" onClick={() => changeQty(o.id, 1)} aria-label="Een meer">+</button>
+                  </div>
+                ) : (
+                  <span className="qty-static">{o.qty}x</span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      })}
 
       {orders.length > 0 && groupBy === 'artikel' && byItemSorted.map(([itemName, info]) => (
         <div className="order-line" key={itemName} style={{alignItems: 'flex-start'}}>
@@ -435,7 +510,10 @@ function App() {
             <div className="who">{itemName}</div>
             <div className="what">{info.people.join(', ')}</div>
           </div>
-          <span className="qty-static" style={{fontSize: '16px'}}>{info.qty}x</span>
+          <div style={{textAlign: 'right', flexShrink: 0}}>
+            <div className="qty-static" style={{fontSize: '16px'}}>{info.qty}x</div>
+            {info.price != null && <div className="line-price">{formatEUR(info.price * info.qty)}</div>}
+          </div>
         </div>
       ))}
 
